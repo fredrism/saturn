@@ -10,6 +10,9 @@ const c = @cImport({
 
 const shaders = @import("shaders.zig");
 const renderer = @import("renderer.zig");
+const input = @import("input.zig");
+
+var gInput = input.InputState.init();
 
 pub const Error = error{
     FailedToGetModuleHandle,
@@ -27,6 +30,10 @@ pub const Error = error{
 };
 
 fn WndProc(hWnd: c.HWND, msg: c.UINT, wParam: c.WPARAM, lParam: c.LPARAM) callconv(.C) c.LRESULT {
+    if (gInput.handleWindowEvent(@enumFromInt(msg), @intCast(wParam), @intCast(lParam))) {
+        return 0;
+    }
+
     switch (msg) {
         c.WM_DESTROY => {
             c.PostQuitMessage(0);
@@ -161,6 +168,8 @@ pub fn main() !void {
     // Main loop
     var msg: c.MSG = .{};
     while (true) {
+        gInput.clear();
+
         // Process any pending messages
         while (c.PeekMessageA(&msg, null, 0, 0, c.PM_REMOVE) != 0) {
             if (msg.message == c.WM_QUIT) {
@@ -169,6 +178,12 @@ pub fn main() !void {
             _ = c.TranslateMessage(&msg);
             _ = c.DispatchMessageA(&msg);
         }
+
+        if (gInput.keyDown(0x41)) {
+            std.debug.print("{s} was pressed\n", .{"A"});
+        }
+
+        std.debug.print("Mouse Position: ({d}, {d})\n", .{ gInput.mouseX, gInput.mouseY });
 
         // Basic clear
         c.glClearColor(0.5, 0.3, 0.3, 1.0);
