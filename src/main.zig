@@ -139,7 +139,23 @@ pub fn main() !void {
         return Error.FailedToLoadGL;
     }
 
-    const shader = try shaders.testShaders();
+    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+    const alloc = arena.allocator();
+    defer arena.deinit();
+
+    var vs = try std.fs.cwd().openFile("shaders/debug_vs.glsl", .{ .mode = .read_only });
+    var fs = try std.fs.cwd().openFile("shaders/debug_fs.glsl", .{ .mode = .read_only });
+    defer vs.close();
+    defer fs.close();
+
+    const vsSource = try vs.readToEndAlloc(alloc, 1024);
+    const fsSource = try fs.readToEndAlloc(alloc, 1024);
+    defer alloc.free(vsSource);
+    defer alloc.free(fsSource);
+
+    var shader = try shaders.ShaderProgram.init(vsSource, fsSource);
+    defer shader.deinit();
+    shader.use();
     const vao = renderer.setupMesh();
 
     // Main loop
@@ -158,7 +174,7 @@ pub fn main() !void {
         c.glClearColor(0.5, 0.3, 0.3, 1.0);
         c.glClear(c.GL_COLOR_BUFFER_BIT);
 
-        renderer.render(shader, vao);
+        renderer.render(vao);
 
         // Swap buffers
         _ = c.SwapBuffers(dc);

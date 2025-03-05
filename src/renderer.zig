@@ -41,8 +41,7 @@ pub fn setupMesh() c.GLuint {
     return vao;
 }
 
-pub fn render(shaderProg: c.GLuint, vao: c.GLuint) void {
-    c.glUseProgram(shaderProg);
+pub fn render(vao: c.GLuint) void {
     c.glBindVertexArray(vao);
     c.glDrawArrays(c.GL_TRIANGLES, 0, 3);
 }

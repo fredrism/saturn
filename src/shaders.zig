@@ -32,7 +32,7 @@ fn compileShader(source: []const u8, shaderType: c.GLenum) !c.GLuint {
 }
 
 // Link a vertex shader and fragment shader into a program.
-pub fn createShaderProgram(vertexSrc: []const u8, fragmentSrc: []const u8) !c.GLuint {
+fn createShaderProgram(vertexSrc: []const u8, fragmentSrc: []const u8) !c.GLuint {
     // Compile vertex shader
     const vs = try compileShader(vertexSrc, c.GL_VERTEX_SHADER);
     defer c.glDeleteShader(vs);
@@ -86,3 +86,21 @@ pub fn testShaders() !c.GLuint {
 
     return try createShaderProgram(vertexShaderSrc, fragmentShaderSrc);
 }
+
+pub const ShaderProgram = struct {
+    program: c.GLuint,
+
+    pub fn init(vertexSrc: []const u8, fragmentSrc: []const u8) !ShaderProgram {
+        const program = try createShaderProgram(vertexSrc, fragmentSrc);
+        return .{ .program = program };
+    }
+
+    pub fn deinit(self: *ShaderProgram) void {
+        c.glDeleteProgram(self.program);
+        self.program = 0;
+    }
+
+    pub fn use(self: *ShaderProgram) void {
+        c.glUseProgram(self.program);
+    }
+};
